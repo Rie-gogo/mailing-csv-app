@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<!-- このファイルはアイコン生成用のヘルパーです -->
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<script>
+function drawIcon(canvas) {
+  const s = canvas.width;
+  const ctx = canvas.getContext('2d');
+  const r = s * 0.18;
+
+  // 背景
+  ctx.beginPath();
+  ctx.moveTo(r, 0); ctx.lineTo(s - r, 0);
+  ctx.quadraticCurveTo(s, 0, s, r);
+  ctx.lineTo(s, s - r);
+  ctx.quadraticCurveTo(s, s, s - r, s);
+  ctx.lineTo(r, s);
+  ctx.quadraticCurveTo(0, s, 0, s - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#2563eb';
+  ctx.fill();
+
+  // 表スタイルアイコン
+  const p = s * 0.15;
+  const w = s - p * 2;
+  const h = s - p * 2;
+  const rows = 5, cols = 3;
+  const cw = w / cols, rh = h / rows;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  for (let r2 = 0; r2 < rows; r2++) {
+    for (let c2 = 0; c2 < cols; c2++) {
+      ctx.fillRect(p + c2 * cw + 2, p + r2 * rh + 2, cw - 4, rh - 4);
+    }
+  }
+
+  // ヘッダー行
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  for (let c2 = 0; c2 < cols; c2++) {
+    ctx.fillRect(p + c2 * cw + 2, p + 2, cw - 4, rh - 4);
+  }
+
+  // 矢印
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = s * 0.05;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const ax = s * 0.72, ay1 = s * 0.55, ay2 = s * 0.78;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay1);
+  ctx.lineTo(ax, ay2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(ax - s*0.1, ay2 - s*0.1);
+  ctx.lineTo(ax, ay2);
+  ctx.lineTo(ax + s*0.1, ay2 - s*0.1);
+  ctx.stroke();
+}
+
+const c192 = document.getElementById('c192');
+const c512 = document.getElementById('c512');
+drawIcon(c192);
+drawIcon(c512);
+
+// ダウンロードリンク
+c192.toBlob(b => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'icon-192.png';
+  a.textContent = 'Download icon-192.png';
+  document.body.appendChild(a); document.body.appendChild(document.createElement('br'));
+});
+c512.toBlob(b => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'icon-512.png';
+  a.textContent = 'Download icon-512.png';
+  document.body.appendChild(a);
+});
+</script>
+</body>
+</html>

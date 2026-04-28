@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Excel → CSV 変換ツール</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Excel2CSV" />
+  <link rel="stylesheet" href="css/style.css?v=6" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- ヘッダー -->
+    <header class="header">
+      <div class="header-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="8" fill="#2563eb"/>
+          <rect x="8" y="8" width="20" height="4" rx="1" fill="#fff" opacity="0.9"/>
+          <rect x="8" y="14" width="20" height="3" rx="1" fill="#93c5fd"/>
+          <rect x="8" y="19" width="20" height="3" rx="1" fill="#93c5fd"/>
+          <rect x="8" y="24" width="20" height="4" rx="1" fill="#93c5fd" opacity="0.7"/>
+          <path d="M22 27l4-4-4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Excel → CSV 変換ツール</h1>
+        <p>先頭ゼロ保持 ・ 全セルをダブルクォートで囲む ・ 複数ファイル対応</p>
+      </div>
+      <div class="header-right">
+        <button id="install-btn" class="install-btn hidden">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          アプリをインストール
+        </button>
+        <div class="pwa-badge">
+          <span class="dot"></span>
+          <span>オフラインで動作中</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══════════════════════════════════════════
+         外字チェック機能カード（新機能）
+         ══════════════════════════════════════════ -->
+    <div class="gaiji-card">
+      <div class="gaiji-card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+        <span>外字チェック・変換</span>
+        <span class="gaiji-badge">Unicode私用領域を検出</span>
+      </div>
+
+      <p class="gaiji-desc">
+        Excelファイルを読み込み、<strong>外字（文字化けの原因となるUnicode私用領域の文字）</strong>が含まれているかを自動検出します。
+        変換テーブルCSVを登録すると、外字を常用漢字に置き換えたCSVを出力できます。
+      </p>
+
+      <!-- ドロップゾーン -->
+      <div class="gaiji-drop-row">
+        <!-- Excelファイル -->
+        <div class="gaiji-drop-col">
+          <div class="gaiji-drop-label">
+            <span class="gaiji-num">①</span> チェック対象 Excel
+          </div>
+          <div id="gaiji-drop-excel" class="vl-drop-zone gaiji-drop-excel" tabindex="0">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="12" y2="12"/><line x1="15" y1="15" x2="12" y2="12"/>
+            </svg>
+            <p class="vl-drop-text">ドロップ または クリック</p>
+            <p class="vl-drop-sub">.xlsx / .xls</p>
+            <input type="file" id="gaiji-input-excel" accept=".xlsx,.xls" class="visually-hidden" />
+          </div>
+          <div id="gaiji-file-excel" class="vl-file-info hidden"></div>
+        </div>
+
+        <!-- 矢印 -->
+        <div class="vl-arrow">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          <span>変換</span>
+        </div>
+
+        <!-- 変換テーブルCSV（任意） -->
+        <div class="gaiji-drop-col">
+          <div class="gaiji-drop-label">
+            <span class="gaiji-num gaiji-num-b">②</span> 変換テーブル CSV <span class="gaiji-optional">（任意）</span>
+          </div>
+          <div id="gaiji-drop-csv" class="vl-drop-zone gaiji-drop-csv" tabindex="0">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="16" y2="17"/>
+            </svg>
+            <p class="vl-drop-text">ドロップ または クリック</p>
+            <p class="vl-drop-sub">外字,変換先 の2列CSV</p>
+            <input type="file" id="gaiji-input-csv" accept=".csv" class="visually-hidden" />
+          </div>
+          <div id="gaiji-file-csv" class="vl-file-info hidden"></div>
+          <div class="gaiji-csv-hint">
+            <details>
+              <summary>CSVフォーマットの説明</summary>
+              <div class="gaiji-csv-hint-body">
+                <p>ヘッダーなし・2列のCSVを用意してください。</p>
+                <pre>（外字文字）,（変換先文字）
+髙,髙
+﨑,崎
+濵,浜</pre>
+                <p>登録がない外字は選択した文字に置き換えられます。</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- オプション -->
+      <div class="gaiji-options">
+        <div class="gaiji-options-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+          </svg>
+          チェックオプション
+        </div>
+        <div class="gaiji-options-grid">
+          <label class="option-item">
+            <input type="checkbox" id="gaiji-opt-all-sheets" />
+            <span class="checkmark"></span>
+            <div class="option-text">
+              <span class="option-label">全シートをチェック</span>
+              <span class="option-desc">複数シートをまとめて外字検出</span>
+            </div>
+          </label>
+          <label class="option-item">
+            <input type="checkbox" id="gaiji-opt-convert" checked />
+            <span class="checkmark"></span>
+            <div class="option-text">
+              <span class="option-label">変換済みCSVも出力</span>
+              <span class="option-desc">外字を置き換えたCSVをダウンロード</span>
+            </div>
+          </label>
+          <div class="option-item select-item">
+            <div class="option-text">
+              <span class="option-label">テーブル未登録の外字</span>
+              <span class="option-desc">変換テーブルにない外字の置き換え先</span>
+            </div>
+            <select id="gaiji-opt-fallback" class="option-select">
+              <option value="?">? に置き換え</option>
+              <option value="">空白（削除）</option>
+              <option value="■">■ に置き換え</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 実行ボタン -->
+      <button id="gaiji-run-btn" class="gaiji-run-btn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        外字チェックを実行
+      </button>
+
+      <!-- 処理中 -->
+      <div id="gaiji-processing" class="processing hidden" style="margin-top:12px">
+        <div class="spinner"></div>
+        <p id="gaiji-proc-text">チェック中...</p>
+      </div>
+
+      <!-- 結果 -->
+      <div id="gaiji-result" class="gaiji-result hidden">
+
+        <!-- サマリーバナー -->
+        <div id="gaiji-summary-banner" class="gaiji-summary-banner"></div>
+
+        <!-- シート別タブ -->
+        <div id="gaiji-sheet-tabs" class="sheet-tabs" style="margin-top:12px"></div>
+
+        <!-- 外字一覧テーブル -->
+        <div class="gaiji-detect-section">
+          <div class="preview-header">
+            <span class="preview-label">外字検出結果</span>
+            <span id="gaiji-detect-note" class="preview-note"></span>
+          </div>
+          <div class="preview-wrapper">
+            <div id="gaiji-detect-table" class="preview-table-container"></div>
+          </div>
+        </div>
+
+        <!-- ダウンロードボタン -->
+        <div id="gaiji-dl-wrap" class="gaiji-dl-wrap"></div>
+
+        <!-- リセット -->
+        <button id="gaiji-reset-btn" class="reset-btn" style="margin-top:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+          </svg>
+          やり直す
+        </button>
+      </div>
+
+    </div><!-- /gaiji-card -->
+
+    <!-- ══════════════════════════════════════════
+         VLOOKUP 結合機能カード
+         ══════════════════════════════════════════ -->
+    <div class="vlookup-card">
+      <div class="vlookup-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+        </svg>
+        <span>列データ結合（VLOOKUP機能）</span>
+        <span class="vlookup-badge">①のデータを②に転記</span>
+      </div>
+
+      <div class="vl-drop-row">
+        <div class="vl-drop-col">
+          <div class="vl-drop-label">
+            <span class="vl-num">①</span> 基本リスト（転記元）
+          </div>
+          <div id="vl-drop-a" class="vl-drop-zone" tabindex="0">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="12" y2="12"/><line x1="15" y1="15" x2="12" y2="12"/>
+            </svg>
+            <p class="vl-drop-text">ドロップ または クリック</p>
+            <p class="vl-drop-sub">住所・氏名などのマスタデータ</p>
+            <input type="file" id="vl-input-a" accept=".xlsx,.xls" class="visually-hidden" />
+          </div>
+          <div id="vl-file-a" class="vl-file-info hidden"></div>
+        </div>
+
+        <div class="vl-arrow">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          <span>転記</span>
+        </div>
+
+        <div class="vl-drop-col">
+          <div class="vl-drop-label">
+            <span class="vl-num vl-num-b">②</span> 挿入先リスト（転記先）
+          </div>
+          <div id="vl-drop-b" class="vl-drop-zone vl-drop-zone-b" tabindex="0">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="16" y2="17"/>
+            </svg>
+            <p class="vl-drop-text">ドロップ または クリック</p>
+            <p class="vl-drop-sub">転記先のデータ（空欄のある列）</p>
+            <input type="file" id="vl-input-b" accept=".xlsx,.xls" class="visually-hidden" />
+          </div>
+          <div id="vl-file-b" class="vl-file-info hidden"></div>
+        </div>
+      </div>
+
+      <div id="vl-mapping" class="vl-mapping hidden">
+        <div class="vl-mapping-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+          </svg>
+          列の設定
+        </div>
+        <div class="vl-mapping-grid">
+          <div class="vl-map-row">
+            <div class="vl-map-label">
+              <span class="vl-map-icon key-icon">🔑</span>
+              キー列（照合に使う列）
+            </div>
+            <div class="vl-map-selects">
+              <div class="vl-select-wrap">
+                <span class="vl-select-badge badge-a">①</span>
+                <select id="vl-key-a" class="vl-select">
+                  <option value="">① のキー列を選択</option>
+                </select>
+              </div>
+              <div class="vl-equal">=</div>
+              <div class="vl-select-wrap">
+                <span class="vl-select-badge badge-b">②</span>
+                <select id="vl-key-b" class="vl-select">
+                  <option value="">② のキー列を選択</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="vl-map-row">
+            <div class="vl-map-label">
+              <span class="vl-map-icon">📋</span>
+              転記する列
+              <button id="vl-add-col" class="vl-add-btn">＋ 列を追加</button>
+            </div>
+            <div id="vl-col-list" class="vl-col-list"></div>
+          </div>
+        </div>
+        <button id="vl-run-btn" class="vl-run-btn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          転記して CSV を作成
+        </button>
+      </div>
+
+      <div id="vl-result" class="vl-result hidden">
+        <div class="vl-result-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          転記完了
+        </div>
+        <div id="vl-result-preview" class="preview-wrapper" style="margin:12px 0">
+          <div id="vl-preview-table" class="preview-table-container"></div>
+        </div>
+        <div id="vl-dl-btn-wrap"></div>
+        <button id="vl-reset-btn" class="reset-btn" style="margin-top:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+          </svg>
+          やり直す
+        </button>
+      </div>
+    </div>
+
+    <!-- メインカード -->
+    <main class="main-card">
+
+      <div id="drop-zone" class="drop-zone" tabindex="0">
+        <div class="drop-icon">
+          <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
+            <rect x="14" y="8"  width="32" height="40" rx="4" fill="#c7d2fe"/>
+            <rect x="10" y="6"  width="32" height="40" rx="4" fill="#e0e7ff"/>
+            <rect x="6"  y="4"  width="32" height="40" rx="4" fill="#eef2ff" stroke="#a5b4fc" stroke-width="1.5"/>
+            <rect x="10" y="12" width="20" height="2.5" rx="1.2" fill="#a5b4fc"/>
+            <rect x="10" y="17" width="24" height="2.5" rx="1.2" fill="#a5b4fc"/>
+            <rect x="10" y="22" width="16" height="2.5" rx="1.2" fill="#a5b4fc"/>
+            <circle cx="48" cy="46" r="13" fill="#2563eb"/>
+            <path d="M48 39v14M41 46l7 7 7-7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="drop-main-text">ここにExcelファイルをドロップ</p>
+        <p class="drop-sub-text">複数ファイルを同時にドロップできます（.xlsx / .xls）</p>
+        <div class="drop-divider"><span>または</span></div>
+        <label class="file-select-btn" for="file-input">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          ファイルを選択（複数可）
+        </label>
+        <input type="file" id="file-input" accept=".xlsx,.xls" multiple class="visually-hidden" />
+      </div>
+
+      <section class="options-panel">
+        <h2 class="options-title">変換オプション</h2>
+        <div class="options-grid">
+          <label class="option-item">
+            <input type="checkbox" id="opt-all-sheets" />
+            <span class="checkmark"></span>
+            <div class="option-text">
+              <span class="option-label">全シートを変換</span>
+              <span class="option-desc">複数シートをまとめてCSV化</span>
+            </div>
+          </label>
+          <label class="option-item">
+            <input type="checkbox" id="opt-skip-empty" checked />
+            <span class="checkmark"></span>
+            <div class="option-text">
+              <span class="option-label">空行をスキップ</span>
+              <span class="option-desc">全セルが空の行を除外する</span>
+            </div>
+          </label>
+          <div class="option-item select-item">
+            <div class="option-text">
+              <span class="option-label">文字コード</span>
+              <span class="option-desc">出力CSVの文字コード</span>
+            </div>
+            <select id="opt-encoding" class="option-select">
+              <option value="utf8bom" selected>UTF-8 (BOM付き) ※Excelで開く場合</option>
+              <option value="utf8">UTF-8 (BOMなし)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <div id="processing" class="processing hidden">
+        <div class="spinner"></div>
+        <p id="processing-text">変換中...</p>
+      </div>
+
+      <div id="error-box" class="error-box hidden" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="error-text"></span>
+      </div>
+
+      <section id="result-panel" class="result-panel hidden">
+        <h2 class="result-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          変換完了
+        </h2>
+        <div id="summary" class="file-info"></div>
+        <div id="preview-tabs" class="sheet-tabs"></div>
+
+        <div class="preview-section">
+          <div class="preview-header">
+            <span class="preview-label">プレビュー（先頭20行）</span>
+            <span id="preview-note" class="preview-note"></span>
+          </div>
+          <div class="preview-wrapper">
+            <div id="preview-table-container" class="preview-table-container"></div>
+          </div>
+        </div>
+
+        <div id="download-list" class="download-section"></div>
+
+        <button id="reset-btn" class="reset-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+          </svg>
+          別のファイルを変換する
+        </button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      🔒 すべての処理はブラウザ内で完結します。ファイルはサーバーへ送信されません。
+    </footer>
+  </div>
+
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- アプリ本体 -->
+  <script src="js/app.js?v=6"></script>
+  <!-- 外字チェック機能（新機能） -->
+  <script src="js/gaiji.js?v=1"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: './' })
+        .then(reg => console.log('[SW] registered'))
+        .catch(err => console.warn('[SW] failed:', err));
+    }
+
+    const installBtn = document.getElementById('install-btn');
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove('hidden');
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.classList.add('hidden');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installBtn.classList.add('hidden');
+      deferredPrompt = null;
+    });
+  </script>
+</body>
+</html>
